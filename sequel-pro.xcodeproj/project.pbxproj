@@ -2908,6 +2908,12 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0510;
+				TargetAttributes = {
+					8D15AC270486D014006FF6A4 = {
+						DevelopmentTeam = LHB787S9TQ;
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = C05733CB08A9546B00998B17 /* Build configuration list for PBXProject "sequel-pro" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -4100,7 +4106,9 @@
 		588593F10F7AEB6900ED0E67 /* Distribution */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = LHB787S9TQ;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SRCROOT)/Frameworks/SPMySQLFramework/build/Distribution",
 					"$(SRCROOT)/Frameworks/QueryKit/build/Distribution",
@@ -4300,7 +4308,9 @@
 		C05733C808A9546B00998B17 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = LHB787S9TQ;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SRCROOT)/Frameworks",
 					"$(SRCROOT)/Frameworks/SPMySQLFramework/build/Debug",
@@ -4323,8 +4333,10 @@
 		C05733C908A9546B00998B17 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = LHB787S9TQ;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SRCROOT)/Frameworks",
 					"$(SRCROOT)/Frameworks/SPMySQLFramework/build/Release",
