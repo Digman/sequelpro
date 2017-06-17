@@ -96,6 +96,7 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 @synthesize duplicateButton;
 @synthesize fieldField;
 @synthesize filterButton;
+@synthesize queryButton;
 @synthesize firstBetweenField;
 @synthesize paginationNextButton;
 @synthesize paginationPageField;
@@ -482,6 +483,7 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 		[secondBetweenField setStringValue:@""];
 		[argumentField setStringValue:@""];
 		[filterButton setEnabled:NO];
+		[queryButton setEnabled:NO];
 
 		// Hide BETWEEN operator controls
 		[firstBetweenField setHidden:YES];
@@ -724,6 +726,7 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 	[argumentField setEnabled:YES];
 	[argumentField setStringValue:@""];
 	[filterButton setEnabled:enableInteraction];
+	[queryButton setEnabled:enableInteraction];
 
 	// Restore preserved filter settings if appropriate and valid
 	if (filterFieldToRestore) {
@@ -813,47 +816,47 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 	[[NSNotificationCenter defaultCenter] postNotificationOnMainThreadWithName:@"SMySQLQueryWillBePerformed" object:tableDocumentInstance];
 
 	// Start construction of the query string
-	queryString = [NSMutableString stringWithFormat:@"SELECT %@%@ FROM %@", 
+	queryString = [NSMutableString stringWithFormat:@"SELECT %@%@ FROM %@",
 #ifndef SP_CODA
-			(activeFilter == 1 && [self tableFilterString] && filterTableDistinct) ? @"DISTINCT " : 
+				   (activeFilter == 1 && [self tableFilterString] && filterTableDistinct) ? @"DISTINCT " :
 #endif
-			@"", 
-			[self fieldListForQuery], [selectedTable backtickQuotedString]];
-
+				   @"",
+				   [self fieldListForQuery], [selectedTable backtickQuotedString]];
+	
 	// Add a filter string if appropriate
 	filterString = [[self onMainThread] tableFilterString];
-
+	
 	if (filterString) {
 		[queryString appendFormat:@" WHERE %@", filterString];
 		isFiltered = YES;
 	} else {
 		isFiltered = NO;
 	}
-
+	
 	// Add sorting details if appropriate
 	if (sortCol) {
 		[queryString appendFormat:@" ORDER BY %@", [[[dataColumns objectAtIndex:[sortCol integerValue]] objectForKey:@"name"] backtickQuotedString]];
 		if (isDesc) [queryString appendString:@" DESC"];
 	}
-
+	
 	// Check to see if a limit needs to be applied
-	if ([prefs boolForKey:SPLimitResults]) 
+	if ([prefs boolForKey:SPLimitResults])
 	{
 		// Ensure the page supplied is within the appropriate limits
 		if (contentPage <= 0)
 			contentPage = 1;
 		else if (contentPage > 1 && (NSInteger)(contentPage - 1) * [prefs integerForKey:SPLimitResultsValue] >= maxNumRows)
 			contentPage = ceilf((CGFloat)maxNumRows / [prefs floatForKey:SPLimitResultsValue]);
-
+		
 		// If the result set is from a late page, take a copy of the string to allow resetting limit
 		// if no results are found
 		if (contentPage > 1) {
 			queryStringBeforeLimit = [NSString stringWithString:queryString];
 		}
-
+		
 		// Append the limit settings
 		[queryString appendFormat:@" LIMIT %ld,%ld", (long)((contentPage-1)*[prefs integerForKey:SPLimitResultsValue]), (long)[prefs integerForKey:SPLimitResultsValue]];
-
+		
 		// Update the approximate count of the rows to load
 		rowsToLoad = rowsToLoad - (contentPage-1)*[prefs integerForKey:SPLimitResultsValue];
 		if (rowsToLoad > [prefs integerForKey:SPLimitResultsValue]) rowsToLoad = [prefs integerForKey:SPLimitResultsValue];
@@ -1342,6 +1345,69 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 	[tableDocumentInstance endTask];
 
 	[reloadPool drain];
+}
+
+/**
+ * Switch to the query tab with the contents of the
+ * current filter.
+ */
+- (IBAction)goToQuery:(id)sender {
+	// If no table is selected, return
+	if (!selectedTable) return;
+	
+	NSMutableString *queryString;
+	NSString *queryStringBeforeLimit = nil;
+	NSString *filterString;
+	
+	NSInteger rowsToLoad = [[tableDataInstance statusValueForKey:@"Rows"] integerValue];
+	
+	queryString = [NSMutableString stringWithFormat:@"SELECT %@%@ FROM %@",
+#ifndef SP_CODA
+				   (activeFilter == 1 && [self tableFilterString] && filterTableDistinct) ? @"DISTINCT " :
+#endif
+				   @"",
+				   [self fieldListForQuery], [selectedTable backtickQuotedString]];
+	
+	// Add a filter string if appropriate
+	filterString = [[self onMainThread] tableFilterString];
+	
+	if (filterString) {
+		[queryString appendFormat:@" WHERE %@", filterString];
+		isFiltered = YES;
+	} else {
+		isFiltered = NO;
+	}
+	
+	// Add sorting details if appropriate
+	if (sortCol) {
+		[queryString appendFormat:@" ORDER BY %@", [[[dataColumns objectAtIndex:[sortCol integerValue]] objectForKey:@"name"] backtickQuotedString]];
+		if (isDesc) [queryString appendString:@" DESC"];
+	}
+	
+	// Check to see if a limit needs to be applied
+	if ([prefs boolForKey:SPLimitResults])
+	{
+		// Ensure the page supplied is within the appropriate limits
+		if (contentPage <= 0)
+			contentPage = 1;
+		else if (contentPage > 1 && (NSInteger)(contentPage - 1) * [prefs integerForKey:SPLimitResultsValue] >= maxNumRows)
+			contentPage = ceilf((CGFloat)maxNumRows / [prefs floatForKey:SPLimitResultsValue]);
+		
+		// If the result set is from a late page, take a copy of the string to allow resetting limit
+		// if no results are found
+		if (contentPage > 1) {
+			queryStringBeforeLimit = [NSString stringWithString:queryString];
+		}
+		
+		// Append the limit settings
+		[queryString appendFormat:@" LIMIT %ld, %ld", (long)((contentPage-1)*[prefs integerForKey:SPLimitResultsValue]), (long)[prefs integerForKey:SPLimitResultsValue]];
+		
+		// Update the approximate count of the rows to load
+		rowsToLoad = rowsToLoad - (contentPage-1)*[prefs integerForKey:SPLimitResultsValue];
+		if (rowsToLoad > [prefs integerForKey:SPLimitResultsValue]) rowsToLoad = [prefs integerForKey:SPLimitResultsValue];
+	}
+	
+	[tableDocumentInstance viewCustomQuery:self withString:queryString];
 }
 
 /**
@@ -4115,6 +4181,7 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 	[duplicateButton setEnabled:NO];
 	[reloadButton setEnabled:NO];
 	[filterButton setEnabled:NO];
+	[queryButton setEnabled:NO];
 	tableRowsSelectable = NO;
 	[paginationPreviousButton setEnabled:NO];
 	[paginationNextButton setEnabled:NO];
@@ -4150,6 +4217,7 @@ static NSString *SPTableFilterSetDefaultOperator = @"SPTableFilterSetDefaultOper
 	}
 
 	[filterButton setEnabled:[fieldField isEnabled]];
+	[queryButton setEnabled:[fieldField isEnabled]];
 	tableRowsSelectable = YES;
 }
 
